@@ -18,11 +18,15 @@
         </div>
         <div class="form-group">
             <label for="category-select">Category</label>
-            <select id="category-select" required></select>
+            <select id="category-select" required>
+                <option value="">Select a category</option>
+            </select>
         </div>
         <div class="form-group">
             <label for="product-select">Products</label>
-            <select id="product-select" multiple required></select>
+            <select id="product-select" multiple required>
+                <option value="">Select a category first</option>
+            </select>
         </div>
         <div class="form-group">
             <label for="discount-type">Discount Type</label>
