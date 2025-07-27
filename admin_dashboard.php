@@ -279,7 +279,15 @@ $current_total_pending_all_time = getCurrentTotalPendingOrders($all_site_orders_
                     <li><a href="admin_dashboard.php?page=categories" class="<?php echo (isset($_GET['page']) && $_GET['page'] === 'categories') ? 'active' : ''; ?>"><i class="fas fa-tags"></i> <span>Manage Categories</span></a></li>
                     <li><a href="admin_dashboard.php?page=edit_products" class="<?php echo (isset($_GET['page']) && $_GET['page'] === 'edit_products') ? 'active' : ''; ?>"><i class="fas fa-edit"></i> <span>Edit Products</span></a></li>
                     <li><a href="admin_dashboard.php?page=reviews" class="<?php echo (isset($_GET['page']) && $_GET['page'] === 'reviews') ? 'active' : ''; ?>"><i class="fas fa-star"></i> <span>Manage Reviews</span></a></li>
-                    <li><a href="admin_dashboard.php?page=coupons" class="<?php echo (isset($_GET['page']) && $_GET['page'] === 'coupons') ? 'active' : ''; ?>"><i class="fas fa-tags"></i> <span>Manage Coupons</span></a></li>
+                    <li class="has-submenu">
+                        <a href="#" class="<?php echo (isset($_GET['page']) && ($_GET['page'] === 'coupons' || $_GET['page'] === 'discounts')) ? 'active' : ''; ?>">
+                            <i class="fas fa-tags"></i> <span>Discount Section</span>
+                        </a>
+                        <ul class="submenu">
+                            <li><a href="admin_dashboard.php?page=coupons">Generate Coupon</a></li>
+                            <li><a href="admin_dashboard.php?page=discounts">Generate Discount</a></li>
+                        </ul>
+                    </li>
                     <li><a href="product_code_generator.html" target="_blank"><i class="fas fa-plus-circle"></i> <span>Add Product Helper</span></a></li>
                     <li><a href="admin_dashboard.php?logout=1"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
                 </ul>
@@ -298,6 +306,8 @@ $current_total_pending_all_time = getCurrentTotalPendingOrders($all_site_orders_
                 <?php include 'admin_reviews.php'; ?>
             <?php elseif (isset($_GET['page']) && $_GET['page'] === 'coupons'): ?>
                 <?php include 'admin_coupons.php'; ?>
+            <?php elseif (isset($_GET['page']) && $_GET['page'] === 'discounts'): ?>
+                <?php include 'admin_discounts.php'; ?>
             <?php elseif (isset($_GET['page']) && $_GET['page'] === 'categories'): ?>
                 <div class="content-card">
                     <h2 class="card-title">Manage Categories</h2>
