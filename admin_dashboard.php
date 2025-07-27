@@ -284,8 +284,8 @@ $current_total_pending_all_time = getCurrentTotalPendingOrders($all_site_orders_
                             <i class="fas fa-tags"></i> <span>Discount Section</span>
                         </a>
                         <ul class="submenu">
-                            <li><a href="admin_dashboard.php?page=coupons">Generate Coupon</a></li>
-                            <li><a href="admin_dashboard.php?page=discounts">Generate Discount</a></li>
+                            <li><a href="admin_dashboard.php?page=coupons">Coupon</a></li>
+                            <li><a href="admin_dashboard.php?page=discounts">Discount</a></li>
                         </ul>
                     </li>
                     <li><a href="product_code_generator.html" target="_blank"><i class="fas fa-plus-circle"></i> <span>Add Product Helper</span></a></li>

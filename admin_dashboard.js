@@ -13,28 +13,39 @@ if (primaryColorCSSVar) {
     document.documentElement.style.setProperty('--primary-color-rgb', hexToRgb(primaryColorCSSVar));
 }
 
-/* --- START: UPDATED JAVASCRIPT FOR SIDEBAR TOGGLE --- */
+/* --- START: UPDATED JAVASCRIPT FOR SIDEBAR TOGGLE AND SUBMENUS --- */
 document.addEventListener('DOMContentLoaded', function() {
-
     const sidebarToggle = document.getElementById('sidebarToggle');
     const adminSidebar = document.getElementById('adminSidebar');
 
     if (sidebarToggle && adminSidebar) {
-        // Event listener for the toggle button
         sidebarToggle.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevents the click from bubbling up to the document
+            e.stopPropagation();
             adminSidebar.classList.toggle('open');
         });
 
-        // Event listener to close the sidebar when clicking outside of it
-         document.addEventListener('click', function(event) {
-             if (adminSidebar.classList.contains('open')) {
-                 // Check if the click was outside the sidebar and not on the toggle button
-                 if (!adminSidebar.contains(event.target) && !sidebarToggle.contains(event.target)) {
-                     adminSidebar.classList.remove('open');
-                 }
-             }
-         });
+        document.addEventListener('click', function(event) {
+            if (adminSidebar.classList.contains('open') && !adminSidebar.contains(event.target) && !sidebarToggle.contains(event.target)) {
+                adminSidebar.classList.remove('open');
+            }
+        });
     }
+
+    // Submenu functionality
+    const submenuToggles = document.querySelectorAll('.admin-nav .has-submenu > a');
+    submenuToggles.forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            const parentLi = this.parentElement;
+            parentLi.classList.toggle('open');
+
+            // Optional: Close other submenus
+            document.querySelectorAll('.admin-nav .has-submenu.open').forEach(openSubmenu => {
+                if(openSubmenu !== parentLi) {
+                    openSubmenu.classList.remove('open');
+                }
+            });
+        });
+    });
 });
 /* --- END: UPDATED JAVASCRIPT --- */

@@ -89,6 +89,26 @@ body {
     transition: color 0.2s ease;
 }
 
+/* Submenu Styles */
+.admin-sidebar .admin-nav .submenu {
+    list-style: none;
+    padding-left: 2.8rem; /* Indent submenu items */
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out;
+}
+
+.admin-sidebar .admin-nav .has-submenu.open > .submenu {
+    max-height: 500px; /* Adjust as needed */
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+.admin-sidebar .admin-nav .submenu a {
+    font-size: 0.85rem;
+    padding: 0.6rem 1rem;
+}
+
 /* --- START: UPDATED MAIN CONTENT STYLES --- */
 .admin-main-content {
     margin-left: 0; /* No margin by default */
