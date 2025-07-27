@@ -19,5 +19,16 @@
             "1"
         ],
         "category": "Software"
+    },
+    {
+        "code": "FINALTEST",
+        "discount_type": "fixed",
+        "discount_value": 50,
+        "category": [
+            "software"
+        ],
+        "product_ids": [
+            "1"
+        ]
     }
 ]

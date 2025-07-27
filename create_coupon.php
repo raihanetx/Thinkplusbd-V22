@@ -1,51 +1,76 @@
 <?php
 header('Content-Type: application/json');
 
-function generate_random_string($length = 8) {
-    $characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    $characters_length = strlen($characters);
-    $random_string = '';
-    for ($i = 0; $i < $length; $i++) {
-        $random_string .= $characters[rand(0, $characters_length - 1)];
-    }
-    return $random_string;
-}
-
 $input = json_decode(file_get_contents('php://input'), true);
+$coupons_file_path = __DIR__ . '/coupons.json';
 
-$code = isset($input['code']) ? trim($input['code']) : '';
-if (empty($code)) {
-    $code = generate_random_string();
+// Function to read coupons
+function get_coupons($path) {
+    if (!file_exists($path) || filesize($path) === 0) {
+        return [];
+    }
+    $json_data = file_get_contents($path);
+    $coupons = json_decode($json_data, true);
+    return json_last_error() === JSON_ERROR_NONE ? $coupons : [];
 }
 
-$discount_type = isset($input['discount_type']) ? $input['discount_type'] : 'percentage';
-$discount_value = isset($input['discount_value']) ? (float)$input['discount_value'] : 0;
-$product_ids = isset($input['product_ids']) ? $input['product_ids'] : null;
-$category = isset($input['category']) ? trim($input['category']) : null;
-
-if (!empty($code) && $discount_value > 0 && !empty($category) && !empty($product_ids)) {
-    $coupons_file_path = __DIR__ . '/coupons.json';
-    $coupons = [];
-    if (file_exists($coupons_file_path)) {
-        $coupons_json = file_get_contents($coupons_file_path);
-        $coupons = json_decode($coupons_json, true);
-    }
-
-    $new_coupon = [
-        'code' => $code,
-        'discount_type' => $discount_type,
-        'discount_value' => $discount_value,
-        'product_ids' => $product_ids,
-        'category' => $category,
-    ];
-
-    $coupons[] = $new_coupon;
+// Function to save coupons
+function save_coupons($path, $coupons) {
     $json_data = json_encode($coupons, JSON_PRETTY_PRINT);
-    file_put_contents($coupons_file_path, $json_data);
+    file_put_contents($path, $json_data);
+}
 
-    echo json_encode(['success' => true, 'coupon_code' => $code]);
+// Basic validation
+if (!isset($input['code']) || empty(trim($input['code']))) {
+    echo json_encode(['success' => false, 'message' => 'Coupon code is required.']);
+    exit();
+}
+if (!isset($input['discount_value']) || !is_numeric($input['discount_value']) || $input['discount_value'] <= 0) {
+    echo json_encode(['success' => false, 'message' => 'A valid discount value is required.']);
     exit();
 }
 
-echo json_encode(['success' => false, 'message' => 'Invalid input.']);
+$code = strtoupper(trim($input['code']));
+$is_edit = isset($input['is_edit']) && $input['is_edit'] === true;
+
+$coupons = get_coupons($coupons_file_path);
+
+// Check for duplicate code on create
+if (!$is_edit) {
+    foreach ($coupons as $coupon) {
+        if (strtoupper($coupon['code']) === $code) {
+            echo json_encode(['success' => false, 'message' => 'This coupon code already exists.']);
+            exit();
+        }
+    }
+}
+
+$new_coupon_data = [
+    'code' => $code,
+    'discount_type' => $input['discount_type'] ?? 'percentage',
+    'discount_value' => (float)$input['discount_value'],
+    'category' => (isset($input['category']) && is_array($input['category'])) ? $input['category'] : [],
+    'product_ids' => (isset($input['product_ids']) && is_array($input['product_ids'])) ? $input['product_ids'] : [],
+];
+
+if ($is_edit) {
+    $coupon_found = false;
+    foreach ($coupons as $index => $coupon) {
+        if (strtoupper($coupon['code']) === $code) {
+            $coupons[$index] = $new_coupon_data;
+            $coupon_found = true;
+            break;
+        }
+    }
+    if (!$coupon_found) {
+        echo json_encode(['success' => false, 'message' => 'Could not find the coupon to update.']);
+        exit();
+    }
+} else {
+    $coupons[] = $new_coupon_data;
+}
+
+save_coupons($coupons_file_path, $coupons);
+
+echo json_encode(['success' => true]);
 ?>
