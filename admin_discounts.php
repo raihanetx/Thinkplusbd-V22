@@ -1,118 +1,142 @@
 <div class="content-card">
-    <h2 class="card-title">Generate Discount</h2>
+    <h2 class="card-title">Apply Direct Discount</h2>
     <form id="generate-discount-form">
-        <div class="form-group">
-            <label for="discount-scope">Apply Discount To:</label>
-            <select id="discount-scope" name="discount_scope">
-                <option value="all">All Products</option>
-                <option value="category">All Products in a Category</option>
-                <option value="specific">Specific Products</option>
-            </select>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="discount-scope">Apply Discount To:</label>
+                <select id="discount-scope" name="discount_scope">
+                    <option value="all" selected>All Products</option>
+                    <option value="category">A Specific Category</option>
+                    <option value="specific">Specific Products</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="discount-type">Discount Type</label>
+                <select id="discount-type" name="discount_type">
+                    <option value="percentage">Percentage (%)</option>
+                    <option value="fixed">Fixed Amount (Taka)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="discount-value">Discount Value</label>
+                <input type="number" id="discount-value" name="discount_value" required>
+            </div>
         </div>
 
-        <div id="category-selection" class="form-group" style="display:none;">
-            <label for="discount-category-select">Category</label>
-            <select id="discount-category-select" name="category_name"></select>
+        <div id="category-selection" class="form-row" style="display:none;">
+            <div class="form-group">
+                <label for="discount-category-select">Category</label>
+                <select id="discount-category-select" name="category_name"></select>
+            </div>
         </div>
 
-        <div id="product-selection" class="form-group" style="display:none;">
-            <label for="discount-product-select">Products</label>
-            <select id="discount-product-select" name="product_ids[]" multiple></select>
+        <div id="product-selection" class="form-row" style="display:none;">
+            <div class="form-group">
+                <label for="discount-product-select">Products</label>
+                <select id="discount-product-select" name="product_ids[]" multiple></select>
+            </div>
         </div>
 
-        <div class="form-group">
-            <label for="discount-type">Discount Type</label>
-            <select id="discount-type" name="discount_type">
-                <option value="percentage">Percentage</option>
-                <option value="fixed">Fixed Amount</option>
-            </select>
+        <div class="form-buttons">
+            <button type="submit">Apply Discount</button>
         </div>
-
-        <div class="form-group">
-            <label for="discount-value">Discount Value</label>
-            <input type="number" id="discount-value" name="discount_value" required>
-        </div>
-
-        <button type="submit">Apply Discount</button>
     </form>
 </div>
 
 <div class="content-card">
     <h2 class="card-title">Discount Preview</h2>
-    <div id="discount-preview"></div>
+    <div id="discount-preview" class="orders-table-container"></div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    $('#discount-category-select, #discount-product-select').select2({
+        width: '100%',
+        placeholder: "Select...",
+        allowClear: true
+    });
+
     const scopeSelect = document.getElementById('discount-scope');
     const categorySelection = document.getElementById('category-selection');
     const productSelection = document.getElementById('product-selection');
-    const categorySelect = document.getElementById('discount-category-select');
-    const productSelect = document.getElementById('discount-product-select');
+    const categorySelect = $('#discount-category-select');
+    const productSelect = $('#discount-product-select');
     let allProducts = [];
+    let allCategories = [];
 
-    fetch('get_products.php')
-        .then(response => response.json())
-        .then(products => {
-            allProducts = products;
-            updateProductSelection();
+    function populateSelectors() {
+        categorySelect.empty();
+        productSelect.empty();
+
+        allCategories.forEach(category => {
+            const option = new Option(category.name, category.name);
+            categorySelect.append(option);
         });
 
-    fetch('get_categories.php')
-        .then(response => response.json())
-        .then(categories => {
-            categories.forEach(category => {
-                const option = new Option(category.name, category.name);
-                categorySelect.add(option);
-            });
-        });
+        // Initially populate products from the first category or leave empty
+        const initialCategory = allCategories.length > 0 ? allCategories[0].name : null;
+        updateProductDropdown(initialCategory);
 
-    scopeSelect.addEventListener('change', function() {
-        switch (this.value) {
-            case 'all':
-                categorySelection.style.display = 'none';
-                productSelection.style.display = 'none';
-                break;
-            case 'category':
-                categorySelection.style.display = 'block';
-                productSelection.style.display = 'none';
-                break;
-            case 'specific':
-                categorySelection.style.display = 'block';
-                productSelection.style.display = 'block';
-                break;
-        }
-        updateProductSelection();
-    });
-
-    categorySelect.addEventListener('change', function() {
-        updateProductSelection();
-    });
-
-    function updateProductSelection() {
-        const selectedScope = scopeSelect.value;
-        const selectedCategory = categorySelect.value;
-        productSelect.innerHTML = '';
-
-        if (selectedScope === 'specific') {
-            const filteredProducts = allProducts.filter(product => product.category === selectedCategory);
-            filteredProducts.forEach(product => {
-                const option = new Option(product.name, product.id);
-                productSelect.add(option);
-            });
-        }
+        categorySelect.trigger('change');
     }
 
-    document.getElementById('generate-discount-form').addEventListener('input', function() {
-        const formData = new FormData(this);
+    function updateProductDropdown(selectedCategory) {
+        productSelect.empty();
+        const filteredProducts = selectedCategory ? allProducts.filter(p => p.category === selectedCategory) : allProducts;
+
+        filteredProducts.forEach(product => {
+            const option = new Option(`${product.name}`, product.id);
+            productSelect.append(option);
+        });
+        productSelect.trigger('change');
+    }
+
+    Promise.all([
+        fetch('get_categories.php').then(res => res.json()),
+        fetch('get_products.php').then(res => res.json())
+    ]).then(([categories, products]) => {
+        allCategories = categories;
+        allProducts = products;
+        populateSelectors();
+        updatePreview();
+    });
+
+    scopeSelect.addEventListener('change', function() {
+        categorySelection.style.display = 'none';
+        productSelection.style.display = 'none';
+
+        switch (this.value) {
+            case 'category':
+                categorySelection.style.display = 'grid';
+                break;
+            case 'specific':
+                categorySelection.style.display = 'grid';
+                productSelection.style.display = 'grid';
+                break;
+        }
+        updatePreview();
+    });
+
+    categorySelect.on('change', function() {
+        if (scopeSelect.value === 'specific') {
+            updateProductDropdown(this.value);
+        }
+        updatePreview();
+    });
+
+    document.getElementById('generate-discount-form').addEventListener('input', updatePreview);
+
+    function updatePreview() {
+        const form = document.getElementById('generate-discount-form');
+        const formData = new FormData(form);
         const discountType = formData.get('discount_type');
         const discountValue = parseFloat(formData.get('discount_value'));
         const scope = formData.get('discount_scope');
         const category = formData.get('category_name');
-        const productIds = formData.getAll('product_ids[]');
+        const productIds = $('#discount-product-select').val();
 
         if (isNaN(discountValue) || discountValue <= 0) {
-            document.getElementById('discount-preview').innerHTML = '<p>Enter a valid discount value.</p>';
+            document.getElementById('discount-preview').innerHTML = '<p class="no-orders-message">Enter a valid discount value to see a preview.</p>';
             return;
         }
 
@@ -125,24 +149,40 @@ document.addEventListener('DOMContentLoaded', function() {
             productsToDiscount = allProducts.filter(p => productIds.includes(p.id.toString()));
         }
 
-        let previewHtml = '<table><tr><th>Product</th><th>Original Price</th><th>Discounted Price</th></tr>';
+        if (productsToDiscount.length === 0) {
+            document.getElementById('discount-preview').innerHTML = '<p class="no-orders-message">No products match the current selection.</p>';
+            return;
+        }
+
+        let previewHtml = '<table class="orders-table"><thead><tr><th>Product</th><th>Original Price</th><th>Discounted Price</th><th>Savings</th></tr></thead><tbody>';
         productsToDiscount.forEach(product => {
             const originalPrice = parseFloat(product.price);
             let discountedPrice;
+            let savings;
+
             if (discountType === 'percentage') {
-                discountedPrice = originalPrice - (originalPrice * discountValue / 100);
+                savings = originalPrice * discountValue / 100;
+                discountedPrice = originalPrice - savings;
             } else {
-                discountedPrice = originalPrice - discountValue;
+                savings = discountValue;
+                discountedPrice = originalPrice - savings;
             }
-            previewHtml += `<tr><td>${product.name}</td><td>${originalPrice.toFixed(2)}</td><td>${discountedPrice.toFixed(2)}</td></tr>`;
+
+            if (discountedPrice < 0) discountedPrice = 0;
+
+            previewHtml += `<tr><td>${product.name}</td><td>${originalPrice.toFixed(2)}</td><td><strong>${discountedPrice.toFixed(2)}</strong></td><td>${savings.toFixed(2)}</td></tr>`;
         });
-        previewHtml += '</table>';
+        previewHtml += '</tbody></table>';
         document.getElementById('discount-preview').innerHTML = previewHtml;
-    });
+    }
 
     document.getElementById('generate-discount-form').addEventListener('submit', function(event) {
         event.preventDefault();
         const formData = new FormData(this);
+        // Append selected products from Select2
+        $('#discount-product-select').val().forEach(id => {
+            formData.append('product_ids[]', id);
+        });
 
         fetch('apply_discount.php', {
             method: 'POST',
@@ -151,10 +191,11 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('Discounts applied successfully!');
-                location.reload();
+                alert(data.message || 'Discounts applied successfully!');
+                // Consider redirecting to the active discounts list
+                window.location.href = 'admin_dashboard.php?page=discounts_list';
             } else {
-                alert('Failed to apply discounts: ' + data.message);
+                alert('Failed to apply discounts: ' + (data.message || 'Unknown error'));
             }
         });
     });
