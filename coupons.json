@@ -1,0 +1,23 @@
+[
+    {
+        "code": "TESTCOUPON",
+        "discount_type": "percentage",
+        "discount_value": 15,
+        "product_ids": [
+            1,
+            2
+        ],
+        "category": [
+            "Course"
+        ]
+    },
+    {
+        "code": "SIMPLIFIED",
+        "discount_type": "fixed",
+        "discount_value": 100,
+        "product_ids": [
+            "1"
+        ],
+        "category": "Software"
+    }
+]
